@@ -28,21 +28,11 @@ func ParseExpression(expr string) (Expression, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Print("Tokens: ")
-	for i := 0; i < len(tokens); i++ {
-		fmt.Print(tokens[i].Value + ", ")
-	}
-	fmt.Println()
 
 	postfix, err := MakePostFix(tokens)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Print("Postfix: ")
-	for i := 0; i < len(postfix); i++ {
-		fmt.Print(postfix[i].Value + " ")
-	}
-	fmt.Println()
 
 	return ParsePostfix(postfix)
 }
@@ -170,7 +160,6 @@ func MakePostFix(tokens []Token) ([]Token, error) {
 			output = append(output, tokens[i])
 		} else if tokens[i].Type == FunctionType {
 			operatorStack.Push(tokens[i])
-			fmt.Println("")
 		} else if tokens[i].Type == OperatorType {
 
 			o1 := tokens[i]
@@ -259,7 +248,6 @@ func tokenize(s string) ([]Token, error) {
 				//Finish variable
 				var typeOf = VariableType
 				if MatchesAny(currentTokenVal, functions) {
-					fmt.Println("MATCHED FUNCTION")
 					typeOf = FunctionType
 				}
 				tokens = append(tokens, Token{
