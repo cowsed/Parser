@@ -6,6 +6,55 @@ import (
 	"testing"
 )
 
+func TestCompile(t *testing.T) {
+	expr := "2+2-5"
+	e, err := ParseExpression(expr)
+	if err != nil {
+		fmt.Println("error")
+		t.Errorf(err.Error())
+	}
+	if e == nil {
+		t.Errorf("Unknown parse error")
+	}
+	expComp := CompileExpression(e)
+	res := expComp(map[string]float64{})
+	if res != float64(2+2-5) {
+		t.Errorf("Had %s, expected result: %g. Actual result: %g", expr, float64(2+2-5), res)
+	}
+}
+func TestCompile2(t *testing.T) {
+	expr := "2+2*a"
+	e, err := ParseExpression(expr)
+	if err != nil {
+		fmt.Println("error")
+		t.Errorf(err.Error())
+	}
+	if e == nil {
+		t.Errorf("Unknown parse error")
+	}
+	expComp := CompileExpression(e)
+	res := expComp(map[string]float64{"a": 3})
+	if res != float64(2+2*3) {
+		t.Errorf("Had %s, expected result: %g. Actual result: %g", expr, float64(2+2*3), res)
+	}
+}
+func TestCompile3(t *testing.T) {
+	expr := "a+2*a"
+	e, err := ParseExpression(expr)
+	if err != nil {
+		fmt.Println("error")
+		t.Errorf(err.Error())
+	}
+	if e == nil {
+		t.Errorf("Unknown parse error")
+	}
+	expComp := CompileExpression(e)
+	res := expComp(map[string]float64{"a": 3})
+	if res != float64(3+2*3) {
+		t.Errorf("Had %s, expected result: %g. Actual result: %g", expr, float64(3+2*3), res)
+	}
+}
+
 func TestParse(t *testing.T) {
 	expr := "2+2-3"
 	e, err := ParseExpression(expr)
@@ -241,4 +290,34 @@ func TestTokenize2(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 	fmt.Println(ts)
+}
+
+// ================ Benchmarks ================
+
+var result float64 //https://dave.cheney.net/2013/06/30/how-to-write-benchmarks-in-go compiler optimization sections
+
+func BenchmarkExpressionEvaluate(b *testing.B) {
+	//Parse the expression
+	expr := "2+2*5+3*5+2*5+3*72"
+	e, _ := ParseExpression(expr)
+	var r float64
+	// evaluate the expression N times
+	for n := 0; n < b.N; n++ {
+		r = e.Evaluate(map[string]float64{})
+	}
+	result = r
+}
+
+func BenchmarkExpressionCompiled(b *testing.B) {
+	//Parse the expression
+	expr := "2+2*5+3*5+2*5+3*72"
+	e, _ := ParseExpression(expr)
+	f := CompileExpression(e)
+
+	var r float64
+	// evaluate the expression N times
+	for n := 0; n < b.N; n++ {
+		r = f(map[string]float64{})
+	}
+	result = r
 }
