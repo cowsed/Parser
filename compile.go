@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"math"
 )
 
@@ -100,7 +101,7 @@ func CompileExpression(e Expression) func(vs map[string]float64) float64 {
 				Bi := code[i+2]
 
 				Ri := code[i+3]
-				consts[Ri] = consts[Ai] * consts[Bi]
+				consts[Ri] = consts[Ai] / consts[Bi]
 				i += 4
 			case PowBytecode:
 				Ai := code[i+1]
@@ -112,14 +113,13 @@ func CompileExpression(e Expression) func(vs map[string]float64) float64 {
 			case CosBytecode:
 				Ai := code[i+1]
 
-				Ri := code[i+3]
+				Ri := code[i+2]
 				consts[Ri] = math.Cos(consts[Ai])
 				i += 3
 
 			case SinBytecode:
 				Ai := code[i+1]
-
-				Ri := code[i+3]
+				Ri := code[i+2]
 				consts[Ri] = math.Sin(consts[Ai])
 				i += 3
 
@@ -129,6 +129,7 @@ func CompileExpression(e Expression) func(vs map[string]float64) float64 {
 			}
 
 		}
+		fmt.Println(consts)
 		return consts[lastResIndex]
 	}
 	return compiledFunc

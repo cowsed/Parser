@@ -55,6 +55,61 @@ func TestCompile3(t *testing.T) {
 	}
 }
 
+func TestCompile5(t *testing.T) {
+	expr := "sin(x*y/b)*y+cos(a*x-y)"
+	e, err := ParseExpression(expr)
+	if err != nil {
+		fmt.Println("error")
+		t.Errorf(err.Error())
+	}
+	if e == nil {
+		t.Errorf("Unknown parse error")
+	}
+	fmt.Println("Evaluated E: ", e.Evaluate(map[string]float64{"a": 0.65343, "b": 0.7345345, "x": 0.1, "y": 0.1}))
+	expComp := CompileExpression(e)
+	res := expComp(map[string]float64{"a": 0.65343, "b": 0.7345345, "x": 0.1, "y": 0.1})
+	if res != float64(math.Sin(.1*.1/0.7345345)*.1+math.Cos(0.65343*.1-.1)) {
+		t.Errorf("Had %s, expected result: %g. Actual result: %g", expr, float64(math.Sin(.1*.1/0.7345345)*.1+math.Cos(0.65343*.1-.1)), res)
+	}
+}
+
+func TestCompile6(t *testing.T) {
+	expr := "sin(y/b)" //Something about this expression is cringe
+	e, err := ParseExpression(expr)
+	if err != nil {
+		fmt.Println("error")
+		t.Errorf(err.Error())
+	}
+	if e == nil {
+		t.Errorf("Unknown parse error")
+	}
+	fmt.Println(e.String())
+	fmt.Println("Evaluated E: ", e.Evaluate(map[string]float64{"a": 0.65343, "b": 0.7345345, "x": 0.1, "y": 0.1}))
+	expComp := CompileExpression(e)
+	res := expComp(map[string]float64{"a": 0.65343, "b": 0.7345345, "x": 0.1, "y": 0.1})
+	if res != float64(math.Sin(.1/0.7345345)) {
+		t.Errorf("Had %s, expected result: %g. Actual result: %g", expr, float64(math.Sin(.1/0.7345345)), res)
+	}
+}
+
+func TestCompile7(t *testing.T) {
+	expr := "cos(a*x-y)"
+	e, err := ParseExpression(expr)
+	if err != nil {
+		fmt.Println("error")
+		t.Errorf(err.Error())
+	}
+	if e == nil {
+		t.Errorf("Unknown parse error")
+	}
+	fmt.Println("Evaluated E: ", e.Evaluate(map[string]float64{"a": 0.65343, "b": 0.7345345, "x": 0.1, "y": 0.1}))
+	expComp := CompileExpression(e)
+	res := expComp(map[string]float64{"a": 0.65343, "b": 0.7345345, "x": 0.1, "y": 0.1})
+	if res != float64(math.Cos(0.65343*.1-.1)) {
+		t.Errorf("Had %s, expected result: %g. Actual result: %g", expr, float64(math.Cos(0.65343*.1-.1)), res)
+	}
+}
+
 func TestParse(t *testing.T) {
 	expr := "2+2-3"
 	e, err := ParseExpression(expr)
