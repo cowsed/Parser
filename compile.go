@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"math"
 )
 
@@ -129,7 +128,6 @@ func CompileExpression(e Expression) func(vs map[string]float64) float64 {
 			}
 
 		}
-		fmt.Println(consts)
 		return consts[lastResIndex]
 	}
 	return compiledFunc
