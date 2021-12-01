@@ -376,3 +376,66 @@ func BenchmarkExpressionCompiled(b *testing.B) {
 	}
 	result = r
 }
+func BenchmarkExpressionNative(b *testing.B) {
+	//Parse the expression
+	//expr := "2+2*5+3*5+2*5+3*72"
+	e := func(a, b, c, d float64) float64 { return a + a*c + c*c + a*c + b*d }
+	var r float64
+	// evaluate the expression N times
+	for n := 0; n < b.N; n++ {
+		r = e(2, 3, 5, 72)
+	}
+	result = r
+}
+
+func BenchmarkExpressionJIT(b *testing.B) {
+	////Parse the expression
+	//expr := "2+2+3+4"
+	//e, _ := ParseExpression(expr)
+	//f := JitCompileExpression(e)
+	//var r float64
+	//// evaluate the expression N times
+	//for n := 0; n < b.N; n++ {
+	//	r = f(map[string]float64{})
+	//}
+	//result = r
+}
+
+//Segmentation and or nil pointer dereference
+//something to do with way executablePrintFunc is made?
+//Maybe with way it is copied over
+//Maybe the way it is compiled but i doubt that a bit
+
+func TestExpressionJIT(t *testing.T) {
+	mathFunction2 := []uint8{
+		//Setup stuff
+		0x48, 0x83, 0xec, 0x18, 0x48, 0x89, 0x6c, 0x24, 0x10, 0x48, 0x8d, 0x6c, 0x24, 0x10, 0x48, 0x89,
+		0x44, 0x24, 0x20, 0x48, 0x85, 0xdb, 0x76, 0x43,
+
+		//data[3]+data[0]+data[1]
+		0xf2, 0x0f, 0x10, 0x00, //MOVESD
+
+		//Returning stuff
+		0x48, 0x8b, 0x6c, 0x24, 0x10,
+		0x48, 0x83, 0xc4, 0x18, 0x90, 0xc3, 0xb8, 0x02, 0x00, 0x00, 0x00, 0x48, 0x89, 0xd9, 0xe8,
+	}
+	data := []float64{1, 2, 3, -8008, -8008}
+
+	f := MakeMathFunc(mathFunction2)
+
+	res := f(data)
+	fmt.Println(res)
+	//Parse the expression
+	//expr := "2+2+3+4"
+	//e, err := ParseExpression(expr)
+	//fmt.Println(e.String())
+	//if err != nil {
+	//	t.Errorf(err.Error())
+	//	return
+	//}
+	//f := JitCompileExpression(e)
+	//var r = f(map[string]float64{"a": 1})
+	//if r != float64(2+2+3+4) {
+	//	t.Errorf("Had 2+2+3+4. Wanted %g, got %g", float64(2+2+3+4), r)
+	//}
+}

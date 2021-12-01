@@ -60,14 +60,23 @@ func (mm *MemoryManager) GetResultSpace() int {
 func CompileExpression(e Expression) func(vs map[string]float64) float64 {
 	mm := NewMemoryManager()
 	lastResIndex := e.Compile(&mm)
+	vars := make([]string, len(mm.varLocations))
+	i := 0
+	for k := range mm.varLocations {
+		vars[i] = k
+		i++
+	}
 
 	compiledFunc := func(vs map[string]float64) float64 {
 		//Copy over code and constants
 		code := mm.bc
 		consts := mm.constants
 		//save vs to mem bank
-		for k, v := range mm.varLocations {
-			consts[v] = vs[k]
+		for _, k := range vars {
+			index := mm.varLocations[k]
+			val := vs[k]
+			consts[index] = val
+
 		}
 		//Execute code
 		for i := 0; i < len(code); {
