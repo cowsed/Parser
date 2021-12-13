@@ -14,6 +14,7 @@ const (
 	PowBytecode //Raise first location to power of second location and save it at third
 	CosBytecode //Take the cosine of the first locartion and save it to the second
 	SinBytecode
+	LNBytecode
 )
 
 type MemoryManager struct {
@@ -129,6 +130,11 @@ func CompileExpression(e Expression) func(vs map[string]float64) float64 {
 				Ai := code[i+1]
 				Ri := code[i+2]
 				consts[Ri] = math.Sin(consts[Ai])
+				i += 3
+			case LNBytecode:
+				Ai := code[i+1]
+				Ri := code[i+2]
+				consts[Ri] = math.Log(consts[Ai])
 				i += 3
 
 			default:

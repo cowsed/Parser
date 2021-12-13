@@ -212,6 +212,66 @@ func TestParse6(t *testing.T) {
 	}
 }
 
+type QnA struct {
+	q string
+	a float64
+}
+
+func TestEvaluateN(t *testing.T) {
+	tests := []QnA{
+		{"2+2", 4},
+		{"2*3", 6},
+		{"3-2", 1},
+		{"3*2+cos(0)", 7},
+		{"3+cos(0)", 4},
+		{"3+sin(0)", 3},
+
+		{"3/2", 1.5},
+		{"3^2", 9},
+	}
+	for i := range tests {
+		e, err := ParseExpression(tests[i].q)
+		if err != nil {
+			t.Error(err)
+		}
+		if e.Evaluate(map[string]float64{}) != tests[i].a {
+			t.Errorf("%s should = %g but evaluated to %g. Parsed to %s", tests[i].q, tests[i].a, e.Evaluate(map[string]float64{}), e.Simplify().String())
+		}
+	}
+}
+
+type IntegrateQnA struct {
+	exp        string
+	wrt        string
+	from, to   float64
+	expected   float64
+	numBuckets int
+}
+
+func TestIntegrateN(t *testing.T) {
+	epsilon := 0.001
+	tests := []IntegrateQnA{
+		{"2", "x", 0, 4, 8, 1},
+		{"x", "x", 0, 4, 8, 1},
+		{"x^2", "x", 0, 4, 64.0 / 3.0, 10000},
+		{"sin(x)", "x", 0, 4, 1.6536, 100},
+		{"sin(x)+1-x/(2*x)", "x", 0, 4, 1.6536, 100},
+	}
+	for i := range tests {
+		e, err := ParseExpression(tests[i].exp)
+		fmt.Println("Finished parsing", e.String())
+		if err != nil {
+			t.Error(err)
+		}
+		test := tests[i]
+		res := IntegrateV(e, map[string]float64{}, test.wrt, test.from, test.to, test.numBuckets)
+		if math.Abs(res-test.expected) > epsilon {
+			fmt.Println(res-test.expected, epsilon)
+			t.Errorf("%s from %g to %g wrt %s should = %g but was %g. Parsed to %s", test.exp, test.from, test.to, test.wrt, test.expected, res, e.String())
+		}
+	}
+}
+
 func TestParseToPostfix(t *testing.T) {
 	expr := "3*4+2"
 	tokens, err := tokenize(expr)
@@ -295,18 +355,6 @@ func TestPostfix(t *testing.T) {
 	}
 }
 
-func TestAdder(t *testing.T) {
-	got := Adder{Constant{1}, Constant{3}}.Evaluate(map[string]float64{})
-	if got != 4 {
-		t.Errorf("1-3 = %g; want -2", got)
-	}
-}
-func TestSubtractor(t *testing.T) {
-	got := Subtractor{Constant{1}, Constant{3}}.Evaluate(map[string]float64{})
-	if got != -2 {
-		t.Errorf("1+3 = %g; want 3", got)
-	}
-}
 func TestStack(t *testing.T) {
 	s := NewTokenStack()
 	s.Push(Token{
@@ -345,6 +393,136 @@ func TestTokenize2(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 	fmt.Println(ts)
+}
+
+func TestSimplify1(t *testing.T) {
+	e, err := ParseExpression("0*ln(x)")
+	if err != nil {
+		t.Error(err)
+	}
+	if e.Simplify().String() != "0" {
+		t.Errorf("Wanted %s, got %s", "0", e.Simplify().String())
+	}
+}
+func TestSimplify2(t *testing.T) {
+	e, err := ParseExpression("2+0*ln(x)")
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Printf("e: %v\n", e)
+	if e.Simplify().String() != "2" {
+		t.Errorf("Wanted %s, got %s", "2", e.Simplify().String())
+	}
+}
+func TestSimplify3(t *testing.T) {
+
+	e, err := ParseExpression("2*x*x")
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Printf("e: %v\n", e)
+	fmt.Printf("e.Simplify(): %v\n", e.Simplify())
+	s := e.Simplify()
+	if e.Simplify().String() != "(2 * (x ^ 2))" {
+		t.Errorf("Wanted %s, got %s", "(2 * (x ^ 2))", e.Simplify().String())
+	}
+	fmt.Println("WOWW", s)
+}
+
+func TestSimplify4(t *testing.T) {
+
+	e, err := ParseExpression("2*x*b*b*x")
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Printf("e: %v\n", e)
+	if e.Simplify().String() != "(2 * ((x ^ 2) * (b ^ 2)))" {
+		t.Errorf("Wanted %s, got %s", " (2 * ((x ^ 2) * (b ^ 2)))", e.Simplify().String())
+	}
+}
+func TestSimplify5(t *testing.T) {
+
+	e, err := ParseExpression("(x+1)*(x+1)")
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Printf("e: %v\n", e)
+	if e.Simplify().Simplify().String() != "((x + 1) ^ 2)" {
+		t.Errorf("Wanted %s, got %s", "((x + 1) ^ 2))", e.Simplify().Simplify().String())
+	}
+}
+
+func TestSimplifyN(t *testing.T) {
+	tests := [][2]string{
+		{"2+2", "4"},
+		{"(x+1) * (x+1)", "((x + 1) ^ 2)"},
+		{"x*x*x*x", "(x ^ 4)"},
+		{"2/2", "1"},
+		{"0/x", "0"},
+		{"0/2", "0"},
+		{"x*0*2", "0"},
+		{"2*(2/1)", "4"},
+		{"(2*2)/1", "4"},
+		{"(2*2)/(3*3)", fmt.Sprint(4.0 / 9.0)},
+
+		{"3^(x+2+3)", "(3 ^ (x + 5))"},
+
+		{"x/x", "1"},
+		{"x/x*x", "x"},
+		{"x*x*x/x", "(x ^ 2)"},
+		{"x/x*x/x", "1"},
+	}
+	//{"x/x", "1"},
+
+	for i := range tests {
+		e, err := ParseExpression(tests[i][0])
+		if err != nil {
+			t.Error(err)
+		}
+		//fmt.Printf("%s Simplifies to %s\n", tests[i][0], tests[i][1])
+		if e.Simplify().String() != tests[i][1] {
+			t.Errorf("%s should simplify to %s but simplified to %s", tests[i][0], tests[i][1], e.Simplify().String())
+		}
+	}
+}
+
+func TestCountMuls(t *testing.T) {
+	e, _ := ParseExpression("x+x/x")
+	fmt.Println("Expression,", e)
+	n, d := ListMuls(e, true)
+	fmt.Println(n, d)
+	fmt.Printf("SimplifyFraction(n, d): %v\n", SimplifyFraction(n, d))
+}
+
+func TestDerivative1(t *testing.T) {
+	e, err := ParseExpression("x^2")
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	derivative := e.Derive("x")
+	//derivative = derivative.Simplify()
+	res := derivative.Evaluate(map[string]float64{"x": 4})
+	fmt.Println(res)
+	fmt.Println("Derivative", derivative.String())
+	fmt.Printf("Wanted %s=%g. got %s = %g", "2 * x", 8.0, derivative.String(), res)
+
+	if res != 8 {
+		t.Errorf("Wanted %s=%g. got %s = %g", "2 * x", 8.0, derivative.String(), res)
+	}
+}
+
+func TestDerivative2(t *testing.T) {
+	e, err := ParseExpression("x^3")
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	derivative := e.Derive("x")
+	res := derivative.Evaluate(map[string]float64{"x": 4})
+	fmt.Println(res)
+	fmt.Println(derivative.String())
+	if res != 16*3 {
+		t.Errorf("Wanted %s=%g. got %s=%g", "3 * x ^ 2", 48.0, derivative.String(), res)
+	}
 }
 
 // ================ Benchmarks ================

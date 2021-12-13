@@ -34,7 +34,11 @@ func ParseExpression(expr string) (Expression, error) {
 		return nil, err
 	}
 
-	return ParsePostfix(postfix)
+	e, err := ParsePostfix(postfix)
+	if err != nil {
+		return nil, err
+	}
+	return e, nil
 }
 
 func ParsePostfix(tokens []Token) (Expression, error) {
@@ -137,6 +141,13 @@ func ParsePostfix(tokens []Token) (Expression, error) {
 					return nil, err
 				}
 				PartsStack.Push(Siner{A})
+			case "ln":
+				A, err := PartsStack.Pop()
+				if err != nil {
+					return nil, err
+				}
+				PartsStack.Push(NaturalLogger{A})
+
 			}
 		}
 	}
@@ -223,7 +234,7 @@ func MakePostFix(tokens []Token) ([]Token, error) {
 
 func tokenize(s string) ([]Token, error) {
 	varParts := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
-	functions := []string{"cos", "sin"}
+	functions := []string{"cos", "sin", "ln"}
 	numberParts := "1234567890."
 	operators := "+-*/^"
 	s = strings.ReplaceAll(s, " ", "")
