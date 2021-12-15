@@ -228,14 +228,15 @@ func TestEvaluateN(t *testing.T) {
 
 		{"3/2", 1.5},
 		{"3^2", 9},
+		{"(9-x^2)^.5", 5},
 	}
 	for i := range tests {
 		e, err := ParseExpression(tests[i].q)
 		if err != nil {
 			t.Error(err)
 		}
-		if e.Evaluate(map[string]float64{}) != tests[i].a {
-			t.Errorf("%s should = %g but evaluated to %g. Parsed to %s", tests[i].q, tests[i].a, e.Evaluate(map[string]float64{}), e.Simplify().String())
+		if e.Evaluate(map[string]float64{"x": -2}) != tests[i].a {
+			t.Errorf("%s should = %g but evaluated to %g. Parsed to %s", tests[i].q, tests[i].a, e.Evaluate(map[string]float64{"x": -2}), e.Simplify().String())
 		}
 	}
 }
@@ -255,17 +256,20 @@ func TestIntegrateN(t *testing.T) {
 		{"x", "x", 0, 4, 8, 1},
 		{"x^2", "x", 0, 4, 64.0 / 3.0, 10000},
 		{"sin(x)", "x", 0, 4, 1.6536, 100},
-		{"sin(x)+1-x/(2*x)", "x", 0, 4, 1.6536, 100},
+		//https://tutorial.math.lamar.edu/classes/calcii/surfacearea.aspx
+		{"2*3.14159*((9-x^2)^.5)*(3/((9-x^2)^.5)", "x", -2, 2, 24 * math.Pi, 100},
 	}
+	//*
 	for i := range tests {
 		e, err := ParseExpression(tests[i].exp)
-		fmt.Println("Finished parsing", e.String())
 		if err != nil {
 			t.Error(err)
 		}
+		fmt.Println("Finished parsing", e.String())
+
 		test := tests[i]
 		res := IntegrateV(e, map[string]float64{}, test.wrt, test.from, test.to, test.numBuckets)
-		if math.Abs(res-test.expected) > epsilon {
+		if math.Abs(res-test.expected) > epsilon || math.IsNaN(res) {
 			fmt.Println(res-test.expected, epsilon)
 			t.Errorf("%s from %g to %g wrt %s should = %g but was %g. Parsed to %s", test.exp, test.from, test.to, test.wrt, test.expected, res, e.String())
 		}
