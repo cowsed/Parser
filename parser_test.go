@@ -529,6 +529,42 @@ func TestDerivative2(t *testing.T) {
 	}
 }
 
+type DerivQnA struct {
+	e            string
+	testNum, ans float64
+}
+
+func TestDerivativeN(t *testing.T) {
+	tests := []DerivQnA{{
+		e:       "2*x^2",
+		testNum: 1,
+		ans:     4,
+	},
+		{
+			e:       "9-x",
+			testNum: 1,
+			ans:     -1,
+		},
+		{
+			e:       "(9-x)^2",
+			testNum: 9,
+			ans:     0,
+		},
+	}
+	for i := range tests {
+		e, err := ParseExpression(tests[i].e)
+		if err != nil {
+			t.Error(err)
+		}
+		test := tests[i]
+		d := e.Derive("x")
+		res := d.Evaluate(map[string]float64{"x": tests[i].testNum})
+		if res != tests[i].ans {
+			t.Errorf("Expected (%g,%g). got (%g,%g). Derivative is %s", test.testNum, test.ans, test.testNum, res, d.String())
+		}
+	}
+}
+
 // ================ Benchmarks ================
 
 var result float64 //https://dave.cheney.net/2013/06/30/how-to-write-benchmarks-in-go compiler optimization sections

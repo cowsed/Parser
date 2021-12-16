@@ -4,8 +4,10 @@ import (
 	"math"
 )
 
+//Bytecode is an instruction type for the interpreter
 type Bytecode int
 
+//List of Bytecodes
 const (
 	AddBytecode = iota //Add two memory locations and save to third memory location
 	SubBytecode        //Subtract two memory locations and save to third memory location
@@ -17,40 +19,52 @@ const (
 	LNBytecode
 )
 
+//MemoryManager keeps track of constants, variables and working memory
+//Also holds place for instructions
 type MemoryManager struct {
 	bc        []Bytecode
 	constants []float64
 	//Guide for which places to fill with which variables
-	//Now there is only one memory bank
 	varLocations map[string]int
 }
 
+//NewMemoryManager returns a new default memory manager
 func NewMemoryManager() MemoryManager {
 	return MemoryManager{
 		constants:    []float64{},
 		varLocations: map[string]int{},
 	}
 }
+
+//AddBytecode adds a bytecode to the instructions
 func (mm *MemoryManager) AddBytecode(bc []Bytecode) {
 	mm.bc = append(mm.bc, bc...)
 }
 
+//AddVariable adds a variable and tracks it to be set at execution time
 func (mm *MemoryManager) AddVariable(name string) int {
 	//Add Variable to memory and return the index to it
+
+	//If its already here
 	if i, ok := mm.varLocations[name]; ok {
 		return i
-	} else {
-		index := mm.GetResultSpace()
-		mm.varLocations[name] = index
-		return index
 	}
+	//if its new
+	index := mm.GetResultSpace()
+	mm.varLocations[name] = index
+	return index
+
 }
+
+//AddConstant adds a constant into the memory
 func (mm *MemoryManager) AddConstant(v float64) int {
 	//Add Constant to memory and return the index to it
 	i := len(mm.constants)
 	mm.constants = append(mm.constants, v)
 	return i
 }
+
+//GetResultSpace returns a location for the next variable or constant to be put in
 func (mm *MemoryManager) GetResultSpace() int {
 	//Add place in memory to store a result and return the index to it
 	i := len(mm.constants)
@@ -58,6 +72,7 @@ func (mm *MemoryManager) GetResultSpace() int {
 	return i
 }
 
+//CompileExpression takes an expression and turns it into bytecode
 func CompileExpression(e Expression) func(vs map[string]float64) float64 {
 	mm := NewMemoryManager()
 	lastResIndex := e.Compile(&mm)

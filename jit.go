@@ -6,6 +6,7 @@ import (
 	"unsafe"
 )
 
+//PrintHexBytes prints out the byes in a hex format
 func PrintHexBytes(s []byte) {
 	fmt.Print("[")
 	for i := range s {
@@ -14,10 +15,12 @@ func PrintHexBytes(s []byte) {
 	fmt.Println("]")
 }
 
+//JitCompileExpression compiles the expression to jitable code
 func JitCompileExpression(e Expression) func(vs map[string]float64) float64 {
 	mm := NewMemoryManager()
+	//Compile to intermediate bytecode
 	e.Compile(&mm)
-
+	//Compile to jitable code
 	f := JitCompile(&mm)
 	return f
 }
@@ -27,7 +30,7 @@ var header = []uint8{0x48, 0x83, 0xec, 0x18, 0x48, 0x89, 0x6c, 0x24, 0x10, 0x48,
 var footer = []uint8{0x48, 0x8b, 0x6c, 0x24,
 	0x10, 0x48, 0x83, 0xc4, 0x18, 0x90, 0xc3, 0xb8, 0x02, 0x00, 0x00, 0x00, 0x48, 0x89, 0xd9, 0xe8}
 
-//Takes a completed memory manager
+//JitCompile Takes a completed memory manager of intermediate bytecode to jitable code
 func JitCompile(mm *MemoryManager) func(vs map[string]float64) float64 {
 	//Track of which vars are needed
 	vars := make([]string, len(mm.varLocations))
@@ -125,6 +128,7 @@ func JitCompile(mm *MemoryManager) func(vs map[string]float64) float64 {
 	}
 }
 
+//MakeMathFunc takes a bytecode and data and turns it into a function
 func MakeMathFunc(mathFunction []uint8) func([]float64) float64 {
 	type floatFunc func([]float64) float64
 

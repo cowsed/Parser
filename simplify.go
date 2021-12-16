@@ -2,6 +2,7 @@ package parser
 
 import "fmt"
 
+//Simplify simplifies a+b
 //Do something similar with add and subtract to what is done with multiplication
 //get list of a addends and subtractants and simplify that list down by combining like terms, then turn it back into tree
 func (a Adder) Simplify() Expression {
@@ -44,6 +45,8 @@ func (a Adder) Simplify() Expression {
 
 	return a
 }
+
+//Simplify simplifies a-b
 func (s Subtractor) Simplify() Expression {
 	aIs0 := false
 	bIs0 := false
@@ -74,6 +77,7 @@ func (s Subtractor) Simplify() Expression {
 	return s
 }
 
+//Simplify simplifies A*B
 func (m Multiplier) Simplify() Expression {
 	aIs0 := false
 	bIs0 := false
@@ -171,6 +175,7 @@ func (m Multiplier) Simplify() Expression {
 	}
 }
 
+//ListMuls lists all the multiples in the numerator and denominator in the expression
 //Fix Division
 //if !Num2Num, in divisions, things that say they go in num go to denom and vice versa
 //Call next level with things reversed
@@ -224,6 +229,7 @@ func ListMuls(e Expression, NumToNum bool) ([]Expression, []Expression) {
 	return num, denom
 }
 
+//Simplify simplifies a/b
 func (d Divider) Simplify() Expression {
 	bIs1 := false
 	aIs0 := false
@@ -272,6 +278,8 @@ func (d Divider) Simplify() Expression {
 		B: B,
 	}
 }
+
+//SimplifyFraction simplifies a fraction
 func SimplifyFraction(Numerator, Denominator []Expression) Expression {
 	degreeCounts := map[Expression][]Expression{}
 	coefficientsInNum := []float64{}
@@ -381,6 +389,7 @@ func SimplifyFraction(Numerator, Denominator []Expression) Expression {
 	}
 }
 
+//Simplify simplifies a powerer
 func (p Powerer) Simplify() Expression {
 	One := Constant{1}
 	Zero := Constant{0}
@@ -395,20 +404,28 @@ func (p Powerer) Simplify() Expression {
 		Exponent: p.Exponent.Simplify(),
 	}
 }
+
+//Simplify simplifies ln(a)
 func (n NaturalLogger) Simplify() Expression {
 	return NaturalLogger{n.A.Simplify()}
 }
+
+//Simplify simplifies a constant. can't really simplify it at all
 func (c Constant) Simplify() Expression {
 	return c
 }
+
+//Simplify simplifies a variable. can't really simplify it at all
 func (v Variable) Simplify() Expression {
 	return v
 }
 
+//Simplify simplifies cos(a)
 func (c Coser) Simplify() Expression {
 	return Coser{c.A.Simplify()}
 }
 
+//Simplify simplifies sin(a)
 func (s Siner) Simplify() Expression {
 	return Siner{s.A.Simplify()}
 }

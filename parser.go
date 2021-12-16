@@ -6,8 +6,10 @@ import (
 	"strings"
 )
 
+//ElementType is the type of each element
 type ElementType int
 
+//Types of elements
 const (
 	OperatorType ElementType = iota
 	NumberType
@@ -17,11 +19,13 @@ const (
 	FunctionType
 )
 
+//Token is the type of token and the value of the token
 type Token struct {
 	Type  ElementType
 	Value string
 }
 
+//ParseExpression parses a string into an executable expression
 func ParseExpression(expr string) (Expression, error) {
 	tokens, err := tokenize(expr)
 
@@ -29,19 +33,19 @@ func ParseExpression(expr string) (Expression, error) {
 		return nil, err
 	}
 
-	postfix, err := MakePostFix(tokens)
+	postfix, err := makePostFix(tokens)
 	if err != nil {
 		return nil, err
 	}
 
-	e, err := ParsePostfix(postfix)
+	e, err := parsePostfix(postfix)
 	if err != nil {
 		return nil, err
 	}
 	return e, nil
 }
 
-func ParsePostfix(tokens []Token) (Expression, error) {
+func parsePostfix(tokens []Token) (Expression, error) {
 	var PartsStack = NewExpressionStack()
 	for i := 0; i < len(tokens); i++ {
 		t := tokens[i]
@@ -154,7 +158,7 @@ func ParsePostfix(tokens []Token) (Expression, error) {
 	return PartsStack.Pop()
 }
 
-func MakePostFix(tokens []Token) ([]Token, error) {
+func makePostFix(tokens []Token) ([]Token, error) {
 	precedence := map[string]int{
 		"+": 2,
 		"-": 2,
@@ -201,15 +205,15 @@ func MakePostFix(tokens []Token) ([]Token, error) {
 					return nil, fmt.Errorf("unbalanced parentheses at index %d '%s'. next token: %s", i, tokens[i].Value, o.Value)
 				}
 				if o.Type != LeftParenType {
-					o_2, _ := operatorStack.Pop()
-					output = append(output, o_2)
+					o2, _ := operatorStack.Pop()
+					output = append(output, o2)
 				} else {
 					break
 				}
 			}
 			//{assert there is a left parenthesis at the top of the operator stack}
-			o_1, err := operatorStack.Peek()
-			if err != nil || o_1.Value != "(" {
+			o1, err := operatorStack.Peek()
+			if err != nil || o1.Value != "(" {
 				return nil, fmt.Errorf("should be a left parenthesis here")
 			}
 			operatorStack.Pop()
@@ -258,7 +262,7 @@ func tokenize(s string) ([]Token, error) {
 			if MidVar {
 				//Finish variable
 				var typeOf = VariableType
-				if MatchesAny(currentTokenVal, functions) {
+				if matchesAny(currentTokenVal, functions) {
 					typeOf = FunctionType
 				}
 				tokens = append(tokens, Token{
@@ -296,7 +300,7 @@ func tokenize(s string) ([]Token, error) {
 		if MidVar && !IsVarPart {
 			//End of variable name
 			var typeOf = VariableType
-			if MatchesAny(currentTokenVal, functions) {
+			if matchesAny(currentTokenVal, functions) {
 				typeOf = FunctionType
 			}
 			tokens = append(tokens, Token{
@@ -354,7 +358,7 @@ func tokenize(s string) ([]Token, error) {
 	return tokens, nil
 }
 
-func MatchesAny(s string, substrs []string) bool {
+func matchesAny(s string, substrs []string) bool {
 	for i := 0; i < len(substrs); i++ {
 		if s == substrs[i] {
 			return true
