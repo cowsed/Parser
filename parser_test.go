@@ -282,7 +282,7 @@ func TestParseToPostfix(t *testing.T) {
 	if err != nil {
 		t.Errorf(err.Error())
 	}
-	pf, err := MakePostFix(tokens)
+	pf, err := makePostFix(tokens)
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -332,7 +332,7 @@ func TestPostfix(t *testing.T) {
 			Value: "2",
 		},
 	}
-	pf, err := MakePostFix(tokens)
+	pf, err := makePostFix(tokens)
 	if err != nil {
 		t.Errorf(err.Error())
 	}
